@@ -1,0 +1,27 @@
+#!/bin/sh
+
+for tool in column grep html2text tail wget xargs; do
+  if command -v $tool > /dev/null 2>&1; then
+    continue
+  else
+    missDep=1
+    echo 1>&2 "\\033[1;31mCommand \"$tool\" is missing!\\033[m"
+  fi
+done
+
+if [ "1" = "$missDep" ]; then
+  exit 1
+fi
+
+baseURL="https://www.t-cat.com.tw/Inquire/TraceDetail.aspx?BillID="
+
+query() {
+  BillID="$1"
+  echo "\\033[36m包裹查詢號碼: $BillID\\033[m"
+  echo "\\033[1;34m$(wget -qO- "${baseURL}${BillID}" | grep "$BillID" | html2text -utf8 | sed -E 's/\[.+\]//g' | xargs -n 1 | tail -n +2)\\033[m" | xargs | xargs -n 4 echo '-' | column -s " " -t
+  echo
+}
+
+for ID in "$@"; do
+  query "$ID"
+done
